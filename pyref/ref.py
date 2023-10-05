@@ -10,4 +10,10 @@ class Ref[T]:
 		for attr in dir(value):
 			if attr == '__class__':
 				continue
-			setattr(self, attr, lambda *args: getattr(self.value, attr)(*args))
+			method = getattr(value, attr)
+			if callable(method):
+				def f(*args, **kwargs):
+					args = [arg.value if isinstance(arg, Ref) else arg for arg in args]
+					kwargs = {k: v.value if isinstance(v, Ref) else v for k, v in kwargs.items()}
+					return method(*args, **kwargs)
+				setattr(self, attr, f)
